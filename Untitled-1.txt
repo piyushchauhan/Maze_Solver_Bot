@@ -1,0 +1,134 @@
+/*
+  Intializing all the pin variables
+*/
+
+//Setting the motor pins
+int mot[2][2];
+mot[0][0] = 2; //Left Motor +
+mot[0][1] = 3; //Left Motor -
+mot[1][0] = 4; //Right Motor +
+mot[1][1] = 5; //Right Motor -
+
+int echo[3];
+//0-->Left; 1-->Centre; 2-->Right
+echo[0] = 13;      //Ultrasonic 1 Echo
+                                                         
+echo[1] = 12;      //Ultrasonic 2 Echo
+echo[2] = 11;      //Ultrasonic 3 Echo
+
+int trig[3];
+//0-->Left; 1-->Centre; 2-->Right
+trig[0] = 10;      //Ultrasonic 1 Trigger
+trig[1] = 9;       //Ultrasonic 2 Trigger
+trig[2] = 8;       //Ultrasonic 3 Trigger
+
+long time[3]; //0-->Left; 1-->Centre; 2-->Right in seconds
+int dist[3];  //0-->Left; 1-->Centre; 2-->Right in centimeters
+
+
+
+void forward()
+{
+  delay(1);
+  digitalWrite(mot[0][0], HIGH);
+  digitalWrite(mot[0][1], LOW);
+  digitalWrite(mot[1][0], HIGH);
+  digitalWrite(mot[1][1], LOW);
+}
+
+void left(int c)
+{
+    delay(1);
+    digitalWrite(mot[0][0], LOW);
+    digitalWrite(mot[0][1], HIGH);
+    digitalWrite(mot[1][0], HIGH);
+    digitalWrite(mot[1][1], LOW);
+    delay(c);
+    stop();
+    observe();
+}
+
+void right(int d)
+{
+    delay(1);
+    digitalWrite(mot[0][0], HIGH);
+    digitalWrite(mot[0][1], LOW);
+    digitalWrite(mot[1][0], LOW);
+    digitalWrite(mot[1][1], HIGH);
+    delay(d);
+    stop();
+    observe();
+}
+
+void observe()
+{
+  analogWrite(trig[0], LOW);
+  analogWrite(trig[1], LOW);
+  analogWrite(trig[2], LOW);
+  delay(1);
+  // Set the trig on HIGH state for 1 second
+  analogWrite(trig[0], HIGH);
+  analogWrite(trig[1], HIGH);
+  analogWrite(trig[2], HIGH);
+  delay(1);
+  analogWrite(trig[0], LOW);
+  analogWrite(trig[1], LOW);
+  analogWrite(trig[2], LOW);
+  // Reads the echo
+  time[0] = pulseIn(echo[0], HIGH);
+  time[1] = pulseIn(echo[1], HIGH);
+  time[2] = pulseIn(echo[2], HIGH);
+  dist[0] = calcDist(time[0]);
+  dist[1] = calcDist(time[1]);    
+  dist[2] = calcDist(time[2]);
+}
+
+int calcDist(long t){
+  return t * 0.034 / 2;
+}
+
+void stop()
+{ digitalWrite(mot[0][0], LOW);
+  digitalWrite(mot[0][1], LOW);
+  digitalWrite(mot[1][0], LOW);
+  digitalWrite(mot[1][1], LOW);}
+void setup()
+{
+  Serial.begin(9600);
+  for (int i = 0; i < 2; i++)
+  {
+    for (int j = 0; j < 2; j++)
+    {
+      pinMode(mot[i][j], OUTPUT);
+    }
+  }
+  for (int i = 0; i < 2; i++)
+  {
+    pinMode(echo[i], OUTPUT);
+    pinMode(trig[i], INPUT);
+  }
+}
+
+void loop()
+{
+    //For Turnings
+    observe();
+    if (dist[1] >= 15){
+        forward();
+    }
+    else if(dist[0] >= 15){
+        left(500);
+    }
+    else if(dist[2] >= 15){
+        right(500);
+    }
+    
+    //For allignment
+    if (dist[0]<10){
+        right(100);
+    }
+    else if(dist[2]<10){
+        left(200);
+    }
+    forward();        
+}

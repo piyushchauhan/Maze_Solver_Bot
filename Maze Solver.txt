@@ -1,0 +1,143 @@
+/*
+  Intializing all the pin variables
+*/
+
+//Setting the motor pins
+int motL1 = 11; //Left Motor +
+int motL2 = 10; //Left Motor -
+int motR1 = 6;  //Right Motor +
+int motR2 = 5;  //Right Motor -
+
+//0-->Left; 1-->Centre; 2-->Right
+int echo0 = 13; //Ultrasonic 1 Echo
+int echo1 = 12; //Ultrasonic 2 Echo
+int echo2 = 11; //Ultrasonic 3 Echo
+
+//0-->Left; 1-->Centre; 2-->Right
+int trig0 = 10; //Ultrasonic 1 Trigger
+int trig1 = 9;  //Ultrasonic 2 Trigger
+int trig2 = 8;  //Ultrasonic 3 Trigger
+
+long time[3]; //0-->Left; 1-->Centre; 2-->Right in seconds
+int dist[3];  //0-->Left; 1-->Centre; 2-->Right in centimeters
+
+void forward()
+{
+    delay(1);
+    digitalWrite(motL1, HIGH);
+    digitalWrite(motL2, LOW);
+    digitalWrite(motR1, HIGH);
+    digitalWrite(motR2, LOW);
+}
+
+void left(int c)
+{
+    delay(1);
+    digitalWrite(motL1, LOW);
+    digitalWrite(motL2, HIGH);
+    digitalWrite(motR1, HIGH);
+    digitalWrite(motR2, LOW);
+    delay(c);
+    stop();
+    observe();
+}
+
+void right(int d)
+{
+    delay(1);
+    digitalWrite(motL1, HIGH);
+    digitalWrite(motL2, LOW);
+    digitalWrite(motR1, LOW);
+    digitalWrite(motR2, HIGH);
+    delay(d);
+    stop();
+    observe();
+}
+
+void observe()
+{
+    analogWrite(trig0, LOW);
+    analogWrite(trig1, LOW);
+    analogWrite(trig2, LOW);
+    delay(1);
+    // Set the trig on HIGH state for 1 second
+    analogWrite(trig0, HIGH);
+    analogWrite(trig1, HIGH);
+    analogWrite(trig2, HIGH);
+    delay(1);
+    analogWrite(trig0, LOW);
+    analogWrite(trig1, LOW);
+    analogWrite(trig2, LOW);
+    // Reads the echo
+    time[0] = pulseIn(echo0, HIGH);
+    time[1] = pulseIn(echo1, HIGH);
+    time[2] = pulseIn(echo2, HIGH);
+    dist[0] = calcDist(time[0]);
+    dist[1] = calcDist(time[1]);
+    dist[2] = calcDist(time[2]);
+}
+
+int calcDist(long t)
+{
+    return t * 0.034 / 2;
+}
+
+void stop()
+{
+    digitalWrite(motL1, LOW);
+    digitalWrite(motL2, LOW);
+    digitalWrite(motR1, LOW);
+    digitalWrite(motR2, LOW);
+}
+void setup()
+{
+    Serial.begin(9600);
+    //Motor pins
+    pinMode(motL1, OUTPUT);
+    pinMode(motL2, OUTPUT);
+    pinMode(motR1, OUTPUT);
+    pinMode(motR2, OUTPUT);
+
+    //Echo Pins
+    pinMode(echo0, INPUT);
+    pinMode(echo1, INPUT);
+    pinMode(echo2, INPUT);
+    //Trig Pins
+    pinMode(trig0, OUTPUT);
+    pinMode(trig1, OUTPUT);
+    pinMode(trig2, OUTPUT);
+
+    Serial.println("--- Start Serial Monitor SEND_RCVE ---");
+    Serial.println(" Type in Box above, . ");
+    Serial.println("(Decimal)(Hex)(Character)");  
+    Serial.println();
+}
+
+void loop()
+{
+    //For Turnings
+    observe();
+    if (dist[1] >= 15)
+    {
+        forward();
+    }
+    else if (dist[0] >= 15)
+    {
+        left(1000);
+    }
+    else if (dist[2] >= 15)
+    {
+        right(1000);
+    }
+
+    //For alignment
+    if (dist[0] < 10)
+    {
+        right(100);
+    }
+    else if (dist[2] < 10)
+    {
+        left(100);
+    }
+    forward();
+}
