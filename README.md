@@ -13,5 +13,5 @@ It is a simple Maze solver bot.
   </ol>
 </li>
 </ol>
-#Important Note
+# Important Note
 Delays are very important as they help in effective reversal and desicion checks
